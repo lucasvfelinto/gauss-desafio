@@ -8,7 +8,7 @@ export function DataProvider({ children }) {
   const [page, setPage] = useState(1);
   const [paginationInfo, setPaginationInfo] = useState({});
   const [filters, setFilters] = useState({});
-  const [sort, setSort] = useState({ key: "id", direction: "asc" });
+  const [sort, setSort] = useState({ key: "", direction: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [itemsPerPage, setItemsPerPage] = useState(20); // novo
@@ -18,32 +18,57 @@ export function DataProvider({ children }) {
     async function loadData() {
       setLoading(true);
       setError(null);
-    
       try {
-        // Remove filtros vazios para não enviar à API
-        const queryFilters = { ...filters };
-        delete queryFilters.id;
-    
-        const response = await fetchCharacters(page, queryFilters);
-        let results = response.results || [];
-    
-        // Se tiver filtro por ID, filtramos localmente
+        let results = [];
+        let info = {};
+  
         if (filters.id) {
-          results = results.filter((char) => String(char.id) === String(filters.id));
+          // Busca apenas o personagem pelo ID
+          const response = await fetch(`https://rickandmortyapi.com/api/character/${filters.id}`);
+          
+          if (!response.ok) {
+            throw new Error("Personagem não encontrado.");
+          }
+  
+          const character = await response.json();
+          let filteredResults = [character];
+  
+          // Agora filtra localmente com os outros filtros
+          if (filters.name) {
+            filteredResults = filteredResults.filter(c => 
+              c.name.toLowerCase().includes(filters.name.toLowerCase())
+            );
+          }
+          if (filters.species) {
+            filteredResults = filteredResults.filter(c => 
+              c.species.toLowerCase().includes(filters.species.toLowerCase())
+            );
+          }
+          if (filters.status) {
+            filteredResults = filteredResults.filter(c => 
+              c.status.toLowerCase() === filters.status.toLowerCase()
+            );
+          }
+  
+          results = filteredResults;
+          info = { count: filteredResults.length, pages: 1 };
+        } else {
+          // Busca normal paginada
+          const response = await fetchCharacters(page, filters);
+          results = response.results;
+          info = response.info;
         }
-    
+  
         setData(results);
-        setPaginationInfo(response.info);
+        setPaginationInfo(info);
       } catch (err) {
+        setData([]);
         setError(err.message || "Erro ao buscar personagens.");
       } finally {
         setLoading(false);
       }
     }
-    
-    
-    
-
+  
     loadData();
   }, [page, filters]);
 

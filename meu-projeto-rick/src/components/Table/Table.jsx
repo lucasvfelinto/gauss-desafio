@@ -14,11 +14,18 @@ function Table() {
     );
   }
 
+  // ⚠️ Erro real da API (ex: ID inválido)
   if (error) {
-    return <p className="text-red-500">{error}</p>;
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-red-600">
+        <span className="text-6xl mb-4">⚠️</span>
+        <p className="text-xl font-semibold">{error}</p>
+        <p className="text-sm text-gray-500 mt-2">Verifique se o ID está correto ou tente novamente mais tarde.</p>
+      </div>
+    );
   }
 
-  // Aplica ordenação
+  // ✅ Aplicar ordenação
   const sortedData = [...data].sort((a, b) => {
     if (!sort.key) return 0;
 
@@ -37,6 +44,7 @@ function Table() {
       : bStr.localeCompare(aStr);
   });
 
+  // 🔍 Resposta válida, mas sem personagens
   if (sortedData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-gray-600">
@@ -47,9 +55,10 @@ function Table() {
     );
   }
 
+  // ✅ Renderizar tabela
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white rounded shadow-md">
+    <div className="overflow-x-auto rounded shadow-md">
+      <table className="min-w-full bg-white">
         <TableHeader />
         <tbody>
           {sortedData.slice(0, itemsPerPage).map((character) => (
